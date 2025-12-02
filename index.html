@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Car App - Final Prototype</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-blue: #1d39c4;
+            --bg-gray: #f3f4f6;
+            --text-dark: #1f2937;
+            --danger: #dc2626;
+            --success: #16a34a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { background-color: #eef2f6; color: var(--text-dark); }
+
+        /* --- LAYOUT UTAMA --- */
+        .app-container {
+            width: 100%;
+            min-height: 100vh;
+            background: white;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        /* Responsive Desktop Config */
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                box-shadow: 0 0 30px rgba(0,0,0,0.05);
+                padding-bottom: 0;
+            }
+            .desktop-nav {
+                display: flex !important;
+                justify-content: space-between;
+                padding: 20px 40px;
+                background: white;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                align-items: center;
+            }
+            .bottom-nav { display: none !important; }
+            .car-list-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+                padding: 20px;
+            }
+            .car-card { margin: 0 !important; }
+        }
+
+        @media (max-width: 767px) {
+            .desktop-nav { display: none !important; }
+            .car-list-container { display: block; }
+        }
+
+        /* --- AUTH PAGES --- */
+        .auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 1000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            padding: 20px;
+        }
+        .auth-form { width: 100%; max-width: 400px; text-align: center; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; }
+        .input-group input[type="text"], 
+        .input-group input[type="password"], 
+        .input-group input[type="number"],
+        .input-group select {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;
+        }
+        /* Style khusus input file */
+        .input-group input[type="file"] {
+            width: 100%; padding: 10px; border: 1px dashed #primary-blue; border-radius: 10px; background: #f9f9f9;
+        }
+
+        .btn-block { width: 100%; padding: 12px; border-radius: 10px; background: var(--primary-blue); color: white; border: none; font-weight: 600; cursor: pointer; margin-top: 10px;}
+        .link-text { margin-top: 15px; font-size: 13px; color: var(--primary-blue); cursor: pointer; }
+
+        /* --- COMPONENTS --- */
+        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .search-bar {
+            background-color: var(--bg-gray); border-radius: 25px;
+            padding: 12px 20px; display: flex; align-items: center;
+            margin: 0 20px;
+        }
+        .search-bar input { border: none; background: transparent; outline: none; width: 100%; margin-left: 10px; }
+
+        .section-title { padding: 20px; font-weight: 700; font-size: 18px; display: flex; justify-content: space-between; }
+        
+        /* Card Mobil */
+        .car-card {
+            background: white; border: 1px solid #eee; margin: 20px;
+            border-radius: 20px; padding: 20px; position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.2s;
+        }
+        .car-card:hover { transform: translateY(-5px); }
+        .car-img-home { width: 100%; height: 150px; object-fit: contain; margin-top: -10px; margin-bottom: 10px; }
+        .car-specs { font-size: 12px; color: #666; margin: 10px 0; display: flex; gap: 10px; }
+        .spec-tag { background: #f0f5ff; padding: 5px 10px; border-radius: 5px; color: var(--primary-blue); }
+
+        /* Detail Page & Map */
+        .detail-content { padding: 20px; }
+        .plan-option {
+            border: 2px solid #ddd; border-radius: 15px; padding: 15px;
+            display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;
+        }
+        .plan-option.active { border-color: var(--primary-blue); background-color: #f0f5ff; }
+        .location-check { margin: 20px 0; padding: 15px; background: #fff3cd; border-radius: 10px; border: 1px solid #ffeeba; }
+        
+        .map-container {
+            width: 100%; height: 200px; background-color: #eee;
+            border-radius: 15px; margin-top: 15px; overflow: hidden;
+            position: relative; display: flex; align-items: center; justify-content: center;
+        }
+        .map-static-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+        .map-overlay-text { position: absolute; background: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
+
+        /* Payment Section */
+        .payment-card {
+            background: white; border: 1px solid #ddd; border-radius: 15px; padding: 15px;
+            margin-bottom: 15px; cursor: pointer; display: flex; align-items: center;
+        }
+        .payment-card.selected { border: 2px solid var(--primary-blue); background: #f0f5ff; }
+        .card-icon { font-size: 24px; margin-right: 15px; color: #444; }
+
+        /* Admin Panel Styles */
+        .admin-dashboard { padding: 20px; }
+        .admin-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; padding: 15px 30px; display: flex;
+            justify-content: space-between; border-top: 1px solid #eee; z-index: 900;
+        }
+        .nav-item { color: #ccc; font-size: 20px; cursor: pointer; text-align: center; }
+        .nav-item.active { color: var(--primary-blue); }
+        .nav-label { font-size: 10px; display: block; margin-top: 2px; }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .text-danger { color: var(--danger); font-size: 12px; margin-top: 5px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-view" class="auth-screen">
+        <h2 style="margin-bottom: 20px; color: var(--primary-blue);">RentCar App</h2>
+        
+        <div id="login-form" class="auth-form">
+            <h3>Login</h3>
+            <div class="input-group">
+                <input type="text" id="login-username" placeholder="Username">
+            </div>
+            <div class="input-group">
+                <input type="password" id="login-password" placeholder="Password">
+            </div>
+            <button class="btn-block" onclick="handleLogin()">Masuk</button>
+            <div class="link-text" onclick="toggleAuth('register')">Belum punya akun? Daftar</div>
+            <div style="margin-top: 20px; font-size: 10px; color: #999;">
+                Default Admin: admin / admin123
+            </div>
+        </div>
+
+        <div id="register-form" class="auth-form hidden">
+            <h3>Register Pelanggan</h3>
+            <div class="input-group"><input type="text" id="reg-name" placeholder="Nama Lengkap"></div>
+            <div class="input-group"><input type="text" id="reg-address" placeholder="Alamat Lengkap"></div>
+            <div class="input-group">
+                <select id="reg-gender">
+                    <option value="">Pilih Jenis Kelamin</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Upload Foto KTP</label>
+                <input type="file" id="reg-ktp" accept="image/*">
+            </div>
+            <div class="input-group"><input type="text" id="reg-user" placeholder="Username Baru"></div>
+            <div class="input-group"><input type="password" id="reg-pass" placeholder="Password Baru"></div>
+            
+            <button class="btn-block" onclick="handleRegister()">Daftar</button>
+            <div class="link-text" onclick="toggleAuth('login')">Sudah punya akun? Login</div>
+        </div>
+    </div>
+
+    <div id="app-view" class="app-container hidden">
+        
+        <div class="desktop-nav">
+            <h2 style="color: var(--primary-blue);">RentCar</h2>
+            <div style="display: flex; gap: 20px; cursor: pointer;">
+                <span onclick="navTo('home')">Home</span>
+                <span onclick="navTo('history')">History</span>
+                <span onclick="navTo('profile')">Profile</span>
+                <span onclick="logout()" style="color: red;">Logout</span>
+            </div>
+        </div>
+
+        <div id="customer-panel">
+            
+            <div id="section-home">
+                <div class="header" style="display: block;">
+                    <h3>Hi, <span id="display-name">User</span>!</h3>
+                    <small style="color: #666;">Mau jalan-jalan kemana hari ini?</small>
+                </div>
+
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Cari mobil impianmu..." onkeyup="filterCars()">
+                </div>
+
+                <div class="section-title">
+                    <span>Available Cars</span>
+                </div>
+
+                <div class="car-list-container" id="car-list">
+                    </div>
+            </div>
+
+            <div id="section-detail" class="hidden">
+                <div class="header">
+                    <i class="fas fa-chevron-left" style="cursor: pointer;" onclick="navTo('home')"></i>
+                    <span>Detail Mobil</span>
+                    <i class="far fa-heart"></i>
+                </div>
+                
+                <div id="detail-content"></div> 
+            </div>
+
+            <div id="section-payment" class="hidden">
+                <div class="header">
+                    <i class="fas fa-chevron-left" style="cursor: pointer;" onclick="navTo('detail')"></i>
+                    <span>Pilih Pembayaran</span>
+                    <div></div>
+                </div>
+                <div style="padding: 20px;">
+                    <h3>Metode Pembayaran</h3>
+                    <p style="color: #666; font-size: 12px; margin-bottom: 20px;">Pilih kartu atau tambahkan baru.</p>
+                    
+                    <div id="payment-list">
+                        </div>
+
+                    <button class="btn-outline" style="width:100%; padding: 10px; border:1px dashed #aaa; background: transparent; cursor: pointer; border-radius: 10px;" onclick="navTo('add-payment')">
+                        + Tambah Metode Pembayaran
+                    </button>
+
+                    <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Total Sewa</span>
+                            <span id="payment-total" style="font-weight: bold;">Rp 0</span>
+                         </div>
+                         <button id="btn-pay-final" class="btn-block" onclick="processOrder()" disabled style="background: #ccc;">Bayar Sekarang</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-add-payment" class="hidden">
+                <div class="header">
+                    <i class="fas fa-chevron-left" style="cursor: pointer;" onclick="navTo('payment')"></i>
+                    <span>Tambah Kartu</span>
+                    <div></div>
+                </div>
+                <div style="padding: 20px;">
+                    <div class="input-group">
+                        <label>Nama di Kartu</label>
+                        <input type="text" id="card-name" placeholder="Nama Pemilik">
+                    </div>
+                    <div class="input-group">
+                        <label>Nomor Kartu</label>
+                        <input type="text" id="card-number" placeholder="0000 0000 0000 0000">
+                    </div>
+                    <div class="input-group">
+                         <label>Jenis Kartu</label>
+                         <select id="card-type">
+                             <option value="Visa">Visa</option>
+                             <option value="Mastercard">Mastercard</option>
+                         </select>
+                    </div>
+                    <button class="btn-block" onclick="savePaymentMethod()">Simpan Kartu</button>
+                </div>
+            </div>
+
+            <div id="section-history" class="hidden">
+                <div class="section-title">Riwayat Pesanan</div>
+                <div id="history-list" style="padding: 0 20px 80px;">
+                    </div>
+            </div>
+
+            <div id="section-profile" class="hidden">
+                <div class="header"><h3>Profile</h3></div>
+                <div style="padding: 20px; text-align: center;">
+                    <img src="https://via.placeholder.com/100" style="border-radius: 50%; margin-bottom: 20px;">
+                    <h3 id="profile-name">Nama User</h3>
+                    <p id="profile-address" style="color: #666; margin-bottom: 20px;">Alamat</p>
+                    
+                    <div style="text-align: left; background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <p><strong>Username:</strong> <span id="profile-username"></span></p>
+                        <p><strong>Gender:</strong> <span id="profile-gender"></span></p>
+                        <p><strong>KTP:</strong> <br>
+                            <img id="profile-ktp-img" src="" style="max-width: 200px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd;">
+                        </p>
+                    </div>
+
+                    <button class="btn-block" style="background: var(--danger);" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="navTo('home')"><i class="fas fa-home"></i><span class="nav-label">Home</span></div>
+                <div class="nav-item" onclick="navTo('history')"><i class="fas fa-file-invoice"></i><span class="nav-label">Orders</span></div>
+                <div class="nav-item" onclick="navTo('profile')"><i class="fas fa-user"></i><span class="nav-label">Profile</span></div>
+            </div>
+        </div>
+
+        <div id="admin-panel" class="hidden">
+            <div class="desktop-nav" style="background: #1f2937; color: white;">
+                <h2>Admin Panel</h2>
+                <span onclick="logout()" style="cursor: pointer; color: #ff6b6b;">Logout</span>
+            </div>
+
+            <div class="admin-dashboard">
+                <div class="admin-card">
+                    <h3>Tambah Mobil Baru</h3>
+                    <div class="input-group" style="margin-top: 10px;">
+                        <input type="text" id="add-car-name" placeholder="Nama Mobil (ex: Pajero)">
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="add-car-price" placeholder="Harga Sewa (ex: 600000)">
+                    </div>
+                    <div class="input-group">
+                        <label>Upload Gambar Mobil</label>
+                        <input type="file" id="add-car-img" accept="image/*">
+                    </div>
+                    <button class="btn-block" onclick="adminAddCar()">+ Tambah Mobil</button>
+                </div>
+
+                <h3>Persetujuan Pesanan</h3>
+                <div id="admin-order-list">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // === 1. DATA & STATE MANAGEMENT ===
+        
+        // Data Mobil Awal
+        const initialCars = [
+            { id: 1, name: "Pajero Sport", price: 600000, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/2019_Mitsubishi_Pajero_Sport_2.4_Dakar_Ultimate_4x2_KR1W_%2820200215%29.jpg/640px-2019_Mitsubishi_Pajero_Sport_2.4_Dakar_Ultimate_4x2_KR1W_%2820200215%29.jpg", specs: ["Automatic", "Diesel", "7 Seats"] },
+            { id: 2, name: "Toyota Agya", price: 270000, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/2023_Toyota_Agya_1.2_GR_Sport_%28Indonesia%29_front_view.jpg/640px-2023_Toyota_Agya_1.2_GR_Sport_%28Indonesia%29_front_view.jpg", specs: ["Automatic", "Gas", "5 Seats"] },
+            { id: 3, name: "Honda Civic", price: 800000, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/2022_Honda_Civic_Sport_Touring_%28USA%29_front_view.jpg/640px-2022_Honda_Civic_Sport_Touring_%28USA%29_front_view.jpg", specs: ["Automatic", "Gas", "5 Seats"] }
+        ];
+
+        // User Default
+        const defaultUser = {
+            username: 'user', password: 'user123', name: 'Septiyana', 
+            address: 'Semarang', gender: 'P', ktpImg: 'https://via.placeholder.com/300x200?text=KTP+User', role: 'customer',
+            paymentMethods: [] 
+        };
+
+        if(!localStorage.getItem('cars')) localStorage.setItem('cars', JSON.stringify(initialCars));
+        if(!localStorage.getItem('orders')) localStorage.setItem('orders', JSON.stringify([]));
+        
+        // Cek user di DB
+        let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        if(storedUsers.length === 0) {
+            storedUsers.push(defaultUser);
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+        }
+        
+        let currentUser = null; 
+        let selectedCarId = null;
+        let selectedPaymentMethod = null;
+
+        // === 2. AUTHENTICATION LOGIC (REAL LOGIN) ===
+        function toggleAuth(type) {
+            if(type === 'register') {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            } else {
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('login-form').classList.remove('hidden');
+            }
+        }
+
+        function handleLogin() {
+            const userIn = document.getElementById('login-username').value;
+            const passIn = document.getElementById('login-password').value;
+            
+            // 1. Cek Admin
+            if (userIn === 'admin' && passIn === 'admin123') {
+                currentUser = { name: 'Administrator', role: 'admin', username: 'admin' };
+                initAdmin();
+                document.getElementById('auth-view').classList.add('hidden');
+                document.getElementById('app-view').classList.remove('hidden');
+                return;
+            } 
+            
+            // 2. Cek User
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const foundUser = users.find(u => u.username === userIn && u.password === passIn);
+
+            if(foundUser) {
+                currentUser = foundUser;
+                initCustomer();
+                document.getElementById('auth-view').classList.add('hidden');
+                document.getElementById('app-view').classList.remove('hidden');
+            } else {
+                alert('Username atau Password salah!');
+            }
+        }
+
+        function handleRegister() {
+            const name = document.getElementById('reg-name').value;
+            const address = document.getElementById('reg-address').value;
+            const gender = document.getElementById('reg-gender').value;
+            const user = document.getElementById('reg-user').value;
+            const pass = document.getElementById('reg-pass').value;
+            const ktpInput = document.getElementById('reg-ktp');
+
+            if(!name || !user || !pass) { alert('Mohon lengkapi data'); return; }
+
+            // Cek Username
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            if(users.some(u => u.username === user)) {
+                alert('Username sudah digunakan!');
+                return;
+            }
+
+            // Fungsi Simpan Data User
+            const saveUser = (ktpBase64) => {
+                const newUser = { 
+                    name, address, gender, 
+                    ktpImg: ktpBase64 || "https://via.placeholder.com/300x200?text=No+KTP", 
+                    username: user, password: pass, 
+                    role: 'customer',
+                    paymentMethods: [] 
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+
+                alert('Registrasi Berhasil! Silakan Login.');
+                toggleAuth('login');
+            };
+
+            // Handle Upload File KTP
+            if (ktpInput.files && ktpInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveUser(e.target.result); // Simpan setelah convert ke base64
+                };
+                reader.readAsDataURL(ktpInput.files[0]);
+            } else {
+                saveUser(null); // Simpan tanpa gambar jika user tidak upload
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            location.reload();
+        }
+
+        // === 3. NAVIGATION LOGIC ===
+        function initCustomer() {
+            document.getElementById('admin-panel').classList.add('hidden');
+            document.getElementById('customer-panel').classList.remove('hidden');
+            
+            // Set Profile Data
+            document.getElementById('display-name').innerText = currentUser.name;
+            document.getElementById('profile-name').innerText = currentUser.name;
+            document.getElementById('profile-address').innerText = currentUser.address;
+            document.getElementById('profile-username').innerText = currentUser.username;
+            document.getElementById('profile-gender').innerText = currentUser.gender === 'L' ? 'Laki-laki' : 'Perempuan';
+            
+            // Tampilkan Gambar KTP di Profile
+            const ktpImg = document.getElementById('profile-ktp-img');
+            ktpImg.src = currentUser.ktpImg;
+            ktpImg.style.display = 'block';
+
+            navTo('home');
+        }
+
+        function initAdmin() {
+            document.getElementById('customer-panel').classList.add('hidden');
+            document.getElementById('admin-panel').classList.remove('hidden');
+            renderAdminOrders();
+        }
+
+        function navTo(page) {
+            // Hide all sections
+            document.getElementById('section-home').classList.add('hidden');
+            document.getElementById('section-detail').classList.add('hidden');
+            document.getElementById('section-history').classList.add('hidden');
+            document.getElementById('section-profile').classList.add('hidden');
+            document.getElementById('section-payment').classList.add('hidden');
+            document.getElementById('section-add-payment').classList.add('hidden');
+            
+            // Reset Nav Active State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            if(page === 'home') {
+                document.getElementById('section-home').classList.remove('hidden');
+                renderCars();
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else if(page === 'history') {
+                document.getElementById('section-history').classList.remove('hidden');
+                renderHistory();
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+            } else if(page === 'profile') {
+                document.getElementById('section-profile').classList.remove('hidden');
+                document.querySelectorAll('.nav-item')[2].classList.add('active');
+            } else if(page === 'detail') {
+                document.getElementById('section-detail').classList.remove('hidden');
+            } else if(page === 'payment') {
+                document.getElementById('section-payment').classList.remove('hidden');
+                renderPaymentMethods();
+            } else if(page === 'add-payment') {
+                document.getElementById('section-add-payment').classList.remove('hidden');
+            }
+        }
+
+        // === 4. FEATURE LOGIC (CUSTOMER) ===
+
+        // A. Render Mobil
+        function renderCars(filterText = '') {
+            const cars = JSON.parse(localStorage.getItem('cars'));
+            const container = document.getElementById('car-list');
+            container.innerHTML = '';
+
+            const filtered = cars.filter(c => c.name.toLowerCase().includes(filterText.toLowerCase()));
+
+            filtered.forEach(car => {
+                const card = `
+                <div class="car-card">
+                    <img src="${car.img}" class="car-img-home">
+                    <div style="font-weight: 700; font-size: 16px;">${car.name}</div>
+                    <div class="car-specs">
+                        ${car.specs.map(s => `<span>${s}</span>`).join(' | ')}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                        <div style="color: var(--primary-blue); font-weight:600;">Rp ${car.price.toLocaleString()}/hari</div>
+                        <button onclick="openDetail(${car.id})" style="background:var(--primary-blue); color:white; border:none; padding:8px 15px; border-radius:10px; cursor:pointer;">Sewa</button>
+                    </div>
+                </div>`;
+                container.innerHTML += card;
+            });
+        }
+
+        function filterCars() {
+            const txt = document.getElementById('search-input').value;
+            renderCars(txt);
+        }
+
+        // B. Detail & Location Logic (With Static Map)
+        function openDetail(id) {
+            const cars = JSON.parse(localStorage.getItem('cars'));
+            const car = cars.find(c => c.id === id);
+            selectedCarId = id;
+
+            // UBAH: Menggunakan map.png (Local File)
+            const mapHtml = `
+                <div id="map-view" class="map-container hidden">
+                    <img src="map.png" class="map-static-img" alt="Peta Lokasi">
+                    <div class="map-overlay-text">Rute Ditemukan: Jarak 5km</div>
+                </div>
+            `;
+
+            const html = `
+                <img src="${car.img}" style="width:100%; height:200px; object-fit:contain;">
+                <h2 style="margin-top:10px;">${car.name}</h2>
+                <p style="color:#666;">Rp ${car.price.toLocaleString()} / hari</p>
+                
+                <div class="location-check">
+                    <label style="font-weight:600; font-size:12px;">Lokasi Penjemputan</label>
+                    <input type="text" id="pickup-loc" placeholder="Masukkan Kota (ex: Semarang)" 
+                           style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:5px;"
+                           onkeyup="checkLocation()">
+                    <small id="loc-msg" class="text-danger hidden">Maaf, layanan hanya tersedia di Jateng/Semarang.</small>
+                </div>
+                
+                ${mapHtml}
+
+                <div style="margin-top:20px;">
+                    <button id="btn-next-payment" class="btn-block" onclick="navTo('payment')" disabled style="background:#ccc;">
+                        Cek Lokasi Dulu
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('detail-content').innerHTML = html;
+            navTo('detail');
+            window.scrollTo(0,0);
+        }
+
+        function checkLocation() {
+            const val = document.getElementById('pickup-loc').value.toLowerCase();
+            const btn = document.getElementById('btn-next-payment');
+            const msg = document.getElementById('loc-msg');
+            const mapView = document.getElementById('map-view');
+            
+            if (val.includes('semarang') || val.includes('jateng') || val.includes('jawa tengah')) {
+                btn.disabled = false;
+                btn.style.background = 'var(--primary-blue)';
+                btn.innerText = 'Lanjut Pilih Pembayaran';
+                msg.classList.add('hidden');
+                
+                mapView.classList.remove('hidden');
+            } else {
+                btn.disabled = true;
+                btn.style.background = '#ccc';
+                btn.innerText = 'Not Available';
+                mapView.classList.add('hidden'); 
+                if(val.length > 3) msg.classList.remove('hidden');
+            }
+        }
+
+        // C. Payment Logic
+        function renderPaymentMethods() {
+            const container = document.getElementById('payment-list');
+            const btnPay = document.getElementById('btn-pay-final');
+            const carPrice = JSON.parse(localStorage.getItem('cars')).find(c => c.id === selectedCarId).price;
+            
+            document.getElementById('payment-total').innerText = "Rp " + carPrice.toLocaleString();
+            
+            container.innerHTML = '';
+            selectedPaymentMethod = null;
+            btnPay.disabled = true;
+            btnPay.style.background = '#ccc';
+
+            if (!currentUser.paymentMethods || currentUser.paymentMethods.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999; border:1px dashed #ccc; border-radius:10px; margin-bottom:15px;">Belum ada metode pembayaran. Silakan tambah kartu.</div>';
+                return;
+            }
+
+            currentUser.paymentMethods.forEach((pm, index) => {
+                const cardIcon = pm.type === 'Visa' ? 'fa-cc-visa' : 'fa-cc-mastercard';
+                const el = document.createElement('div');
+                el.className = 'payment-card';
+                el.onclick = () => selectPayment(index);
+                el.innerHTML = `
+                    <i class="fab ${cardIcon} card-icon"></i>
+                    <div>
+                        <div style="font-weight:600;">${pm.type} •••• ${pm.number.slice(-4)}</div>
+                        <small style="color:#666;">${pm.name}</small>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function selectPayment(index) {
+            const cards = document.querySelectorAll('.payment-card');
+            cards.forEach(c => c.classList.remove('selected'));
+            cards[index].classList.add('selected');
+            
+            selectedPaymentMethod = currentUser.paymentMethods[index];
+            const btnPay = document.getElementById('btn-pay-final');
+            btnPay.disabled = false;
+            btnPay.style.background = 'var(--primary-blue)';
+        }
+
+        function savePaymentMethod() {
+            const name = document.getElementById('card-name').value;
+            const number = document.getElementById('card-number').value;
+            const type = document.getElementById('card-type').value;
+
+            if(!name || !number) { alert('Lengkapi data kartu'); return; }
+
+            const newPayment = { name, number, type };
+            
+            if(!currentUser.paymentMethods) currentUser.paymentMethods = [];
+            currentUser.paymentMethods.push(newPayment);
+
+            const users = JSON.parse(localStorage.getItem('users'));
+            const userIndex = users.findIndex(u => u.username === currentUser.username);
+            if(userIndex !== -1) {
+                users[userIndex].paymentMethods = currentUser.paymentMethods;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+
+            alert('Metode pembayaran berhasil ditambahkan!');
+            navTo('payment');
+        }
+
+        // D. Final Process Order
+        function processOrder() {
+            if(!selectedPaymentMethod) { alert('Pilih pembayaran dulu!'); return; }
+            
+            const location = document.getElementById('pickup-loc').value;
+            const cars = JSON.parse(localStorage.getItem('cars'));
+            const car = cars.find(c => c.id === selectedCarId);
+
+            const newOrder = {
+                id: Date.now(),
+                user: currentUser.username,
+                carName: car.name,
+                price: car.price,
+                location: location,
+                payment: selectedPaymentMethod.type + ' ' + selectedPaymentMethod.number.slice(-4),
+                status: 'pending', 
+                date: new Date().toLocaleDateString()
+            };
+
+            const orders = JSON.parse(localStorage.getItem('orders'));
+            orders.push(newOrder);
+            localStorage.setItem('orders', JSON.stringify(orders));
+
+            alert('Pembayaran Berhasil! Pesanan dibuat & Menunggu Admin.');
+            navTo('history');
+        }
+
+        // E. Render History
+        function renderHistory() {
+            const orders = JSON.parse(localStorage.getItem('orders'));
+            const myOrders = orders.filter(o => o.user === currentUser.username);
+            const container = document.getElementById('history-list');
+            
+            if(myOrders.length === 0) {
+                container.innerHTML = '<p style="text-align:center; margin-top:50px;">Belum ada pesanan.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            myOrders.reverse().forEach(o => {
+                let badgeClass = o.status === 'approved' ? 'status-approved' : (o.status === 'rejected' ? 'text-danger' : 'status-pending');
+                
+                const item = `
+                <div class="admin-card">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="font-weight:bold;">${o.carName}</span>
+                        <span class="status-badge ${badgeClass}">${o.status.toUpperCase()}</span>
+                    </div>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">
+                        <i class="fas fa-map-marker-alt"></i> ${o.location}<br>
+                        <i class="far fa-credit-card"></i> ${o.payment || '-'}<br>
+                        <i class="far fa-calendar"></i> ${o.date}
+                    </div>
+                    <div style="margin-top:10px; font-weight:bold; color:var(--primary-blue);">
+                        Rp ${o.price.toLocaleString()}
+                    </div>
+                </div>`;
+                container.innerHTML += item;
+            });
+        }
+
+        // === 5. FEATURE LOGIC (ADMIN) ===
+        function adminAddCar() {
+            const name = document.getElementById('add-car-name').value;
+            const price = parseInt(document.getElementById('add-car-price').value);
+            const imgInput = document.getElementById('add-car-img');
+
+            if(!name || !price) { alert('Data tidak lengkap'); return; }
+
+            const saveCar = (imgBase64) => {
+                 const cars = JSON.parse(localStorage.getItem('cars'));
+                cars.push({
+                    id: Date.now(),
+                    name, price, 
+                    img: imgBase64 || "https://via.placeholder.com/300",
+                    specs: ["Manual", "Gas"]
+                });
+                localStorage.setItem('cars', JSON.stringify(cars));
+                
+                alert('Mobil berhasil ditambahkan!');
+                document.getElementById('add-car-name').value = '';
+                document.getElementById('add-car-price').value = '';
+                imgInput.value = ''; // Reset input file
+            };
+
+            // Handle File Upload Mobil
+            if (imgInput.files && imgInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveCar(e.target.result);
+                };
+                reader.readAsDataURL(imgInput.files[0]);
+            } else {
+                saveCar(null);
+            }
+        }
+
+        function renderAdminOrders() {
+            const orders = JSON.parse(localStorage.getItem('orders'));
+            const container = document.getElementById('admin-order-list');
+            container.innerHTML = '';
+
+            const pendingOrders = orders.filter(o => o.status === 'pending');
+
+            if(pendingOrders.length === 0) {
+                container.innerHTML = '<p style="color:#666;">Tidak ada pesanan pending.</p>';
+                return;
+            }
+
+            pendingOrders.forEach(o => {
+                const card = `
+                <div class="admin-card">
+                    <strong>${o.user}</strong> memesan <strong>${o.carName}</strong>
+                    <div style="font-size:12px; margin:5px 0;">Loc: ${o.location} | Pay: ${o.payment}</div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button onclick="updateStatus(${o.id}, 'approved')" style="flex:1; background:var(--success); color:white; border:none; padding:5px; border-radius:5px; cursor:pointer;">Approve</button>
+                        <button onclick="updateStatus(${o.id}, 'rejected')" style="flex:1; background:var(--danger); color:white; border:none; padding:5px; border-radius:5px; cursor:pointer;">Reject</button>
+                    </div>
+                </div>`;
+                container.innerHTML += card;
+            });
+        }
+
+        function updateStatus(id, status) {
+            const orders = JSON.parse(localStorage.getItem('orders'));
+            const idx = orders.findIndex(o => o.id === id);
+            if(idx !== -1) {
+                orders[idx].status = status;
+                localStorage.setItem('orders', JSON.stringify(orders));
+                renderAdminOrders();
+            }
+        }
+    </script>
+</body>
+</html>

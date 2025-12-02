@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Car App - Full Features</title>
+    <title>Rent Car App - Final Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -58,6 +58,10 @@
 
         @media (max-width: 767px) {
             .desktop-nav { display: none !important; }
+            
+            /* PERBAIKAN: Memaksa Header Admin tetap muncul di Mobile agar bisa Logout */
+            #admin-panel .desktop-nav { display: flex !important; }
+
             .car-list-container { display: block; }
         }
 
@@ -140,7 +144,7 @@
         .status-approved { background: #d4edda; color: #155724; }
         .status-rejected { background: #f8d7da; color: #721c24; }
 
-        /* MODAL STYLES (New Feature) */
+        /* MODAL STYLES */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2000;
@@ -177,7 +181,8 @@
 
     <div id="auth-view" class="auth-screen">
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img src="logo.png" class="logo-img" alt="Logo"> <h2 style="color: var(--primary-blue);">RentCar</h2>
+            <img src="logo.png" class="logo-img" alt="Logo">
+            <h2 style="color: var(--primary-blue);">RentCar</h2>
         </div>
         
         <div id="login-form" class="auth-form">
@@ -398,10 +403,10 @@
     <script>
         // === 1. DATA & STATE MANAGEMENT ===
         
-        // Data Mobil Awal (GAMBAR LOKAL SESUAI PERMINTAAN)
+        // Data Mobil Awal
         const initialCars = [
             { id: 1, name: "Pajero Sport", price: 600000, img: "pajero.png", specs: ["Automatic", "Diesel", "7 Seats"] },
-            { id: 2, name: "Toyota Agya", price: 270000, img: "agya.png" , specs: ["Automatic", "Gas", "5 Seats"] },
+            { id: 2, name: "Toyota Agya", price: 270000, img: "agya.png", specs: ["Automatic", "Gas", "5 Seats"] },
             { id: 3, name: "Honda Civic", price: 800000, img: "civic.png", specs: ["Automatic", "Gas", "5 Seats"] }
         ];
 
@@ -425,7 +430,7 @@
         let currentUser = null; 
         let selectedCarId = null;
         let selectedPaymentMethod = null;
-        let isEditing = false; // State untuk mode edit admin
+        let isEditing = false; 
 
         // === 2. AUTHENTICATION LOGIC ===
         function toggleAuth(type) {
@@ -442,7 +447,6 @@
             const userIn = document.getElementById('login-username').value;
             const passIn = document.getElementById('login-password').value;
             
-            // Admin Check
             if (userIn === 'admin' && passIn === 'admin123') {
                 currentUser = { name: 'Administrator', role: 'admin', username: 'admin' };
                 initAdmin();
@@ -451,7 +455,6 @@
                 return;
             } 
             
-            // User Check
             const users = JSON.parse(localStorage.getItem('users')) || [];
             const foundUser = users.find(u => u.username === userIn && u.password === passIn);
 
@@ -534,7 +537,7 @@
         function initAdmin() {
             document.getElementById('customer-panel').classList.add('hidden');
             document.getElementById('admin-panel').classList.remove('hidden');
-            renderAdminCarList(); // Menampilkan daftar mobil untuk diedit
+            renderAdminCarList();
             renderAdminOrders();
         }
 
@@ -570,8 +573,6 @@
         }
 
         // === 4. CUSTOMER FEATURES ===
-
-        // A. Render Cars
         function renderCars(filterText = '') {
             const cars = JSON.parse(localStorage.getItem('cars'));
             const container = document.getElementById('car-list');
@@ -601,13 +602,11 @@
             renderCars(txt);
         }
 
-        // B. Detail & Map
         function openDetail(id) {
             const cars = JSON.parse(localStorage.getItem('cars'));
             const car = cars.find(c => c.id === id);
             selectedCarId = id;
 
-            // Menggunakan map.png dari folder lokal
             const mapHtml = `
                 <div id="map-view" class="map-container hidden">
                     <img src="map.png" class="map-static-img" alt="Peta Lokasi">
@@ -666,7 +665,6 @@
             }
         }
 
-        // C. Payment
         function renderPaymentMethods() {
             const container = document.getElementById('payment-list');
             const btnPay = document.getElementById('btn-pay-final');
@@ -758,7 +756,6 @@
             navTo('history');
         }
 
-        // D. History with Detail Modal
         function renderHistory() {
             const orders = JSON.parse(localStorage.getItem('orders'));
             const myOrders = orders.filter(o => o.user === currentUser.username);
@@ -835,7 +832,6 @@
 
         // === 5. ADMIN LOGIC (CRUD & APPROVAL) ===
 
-        // A. Create & Update Logic
         function adminSaveCar() {
             const name = document.getElementById('add-car-name').value;
             const price = parseInt(document.getElementById('add-car-price').value);
@@ -849,24 +845,22 @@
 
             const processSave = (imgResult) => {
                 if (isEditing) {
-                    // UPDATE EXISTING
                     const id = parseInt(document.getElementById('edit-car-id').value);
                     const idx = cars.findIndex(c => c.id === id);
                     if (idx !== -1) {
                         cars[idx].name = name;
                         cars[idx].price = price;
                         if(specsArr.length > 0) cars[idx].specs = specsArr;
-                        if(imgResult) cars[idx].img = imgResult; // Update gambar hanya jika upload baru
+                        if(imgResult) cars[idx].img = imgResult; 
                     }
                     alert('Mobil berhasil diupdate!');
-                    cancelEdit(); // Reset form
+                    cancelEdit(); 
                 } else {
-                    // CREATE NEW
                     const newCar = {
                         id: Date.now(),
                         name, price, 
                         specs: specsArr.length > 0 ? specsArr : ["Manual", "Gas"],
-                        img: imgResult || "pajero.png" // Default jika tidak upload
+                        img: imgResult || "pajero.png" 
                     };
                     cars.push(newCar);
                     alert('Mobil berhasil ditambahkan!');
@@ -876,13 +870,12 @@
                 renderAdminCarList();
             };
 
-            // Handle Image Logic
             if (imgInput.files && imgInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) { processSave(e.target.result); };
                 reader.readAsDataURL(imgInput.files[0]);
             } else {
-                processSave(null); // No new image
+                processSave(null); 
             }
         }
 
@@ -891,18 +884,15 @@
             const cars = JSON.parse(localStorage.getItem('cars'));
             const car = cars.find(c => c.id === id);
 
-            // Populate Form
             document.getElementById('form-title').innerText = "Edit Mobil";
             document.getElementById('edit-car-id').value = car.id;
             document.getElementById('add-car-name').value = car.name;
             document.getElementById('add-car-price').value = car.price;
             document.getElementById('add-car-specs').value = car.specs.join(', ');
             
-            // Change Button State
             document.getElementById('btn-save-car').innerText = "Update Mobil";
             document.getElementById('btn-cancel-edit').classList.remove('hidden');
             
-            // Scroll to top form
             document.querySelector('.admin-dashboard').scrollTop = 0;
         }
 
@@ -921,7 +911,6 @@
             document.getElementById('add-car-img').value = '';
         }
 
-        // B. Delete Logic
         function deleteCar(id) {
             if(confirm('Yakin ingin menghapus mobil ini?')) {
                 let cars = JSON.parse(localStorage.getItem('cars'));
@@ -931,7 +920,6 @@
             }
         }
 
-        // C. Render Admin Lists
         function renderAdminCarList() {
             const cars = JSON.parse(localStorage.getItem('cars'));
             const container = document.getElementById('admin-car-list');

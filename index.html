@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Car App - Final Prototype</title>
+    <title>Rent Car App - Full Features</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -14,6 +14,7 @@
             --text-dark: #1f2937;
             --danger: #dc2626;
             --success: #16a34a;
+            --warning: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -77,7 +78,6 @@
         .input-group select {
             width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px;
         }
-        /* Style khusus input file */
         .input-group input[type="file"] {
             width: 100%; padding: 10px; border: 1px dashed #primary-blue; border-radius: 10px; background: #f9f9f9;
         }
@@ -104,8 +104,8 @@
         }
         .car-card:hover { transform: translateY(-5px); }
         .car-img-home { width: 100%; height: 150px; object-fit: contain; margin-top: -10px; margin-bottom: 10px; }
-        .car-specs { font-size: 12px; color: #666; margin: 10px 0; display: flex; gap: 10px; }
-        .spec-tag { background: #f0f5ff; padding: 5px 10px; border-radius: 5px; color: var(--primary-blue); }
+        .car-specs { font-size: 12px; color: #666; margin: 10px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+        .spec-tag { background: #f0f5ff; padding: 5px 10px; border-radius: 5px; color: var(--primary-blue); font-size: 10px; margin-right: 5px;}
 
         /* Detail Page & Map */
         .detail-content { padding: 20px; }
@@ -134,10 +134,28 @@
 
         /* Admin Panel Styles */
         .admin-dashboard { padding: 20px; }
-        .admin-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .admin-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; position: relative;}
         .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; }
         .status-pending { background: #fff3cd; color: #856404; }
         .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        /* MODAL STYLES (New Feature) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white; width: 100%; max-width: 400px;
+            border-radius: 20px; padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-close { float: right; font-size: 20px; cursor: pointer; color: #999; }
+        
+        .admin-action-btn { font-size: 12px; padding: 5px 10px; border-radius: 5px; cursor: pointer; border: none; margin-right: 5px; color: white;}
 
         /* Bottom Nav */
         .bottom-nav {
@@ -152,12 +170,15 @@
         /* Utilities */
         .hidden { display: none !important; }
         .text-danger { color: var(--danger); font-size: 12px; margin-top: 5px; display: block; }
+        .logo-img { height: 30px; margin-right: 10px; }
     </style>
 </head>
 <body>
 
     <div id="auth-view" class="auth-screen">
-        <h2 style="margin-bottom: 20px; color: var(--primary-blue);">RentCar App</h2>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img src="logo.png" class="logo-img" alt="Logo"> <h2 style="color: var(--primary-blue);">RentCar</h2>
+        </div>
         
         <div id="login-form" class="auth-form">
             <h3>Login</h3>
@@ -186,7 +207,7 @@
                 </select>
             </div>
             <div class="input-group">
-                <label>Upload Foto KTP</label>
+                <label>Upload Foto KTP (Untuk Profile)</label>
                 <input type="file" id="reg-ktp" accept="image/*">
             </div>
             <div class="input-group"><input type="text" id="reg-user" placeholder="Username Baru"></div>
@@ -200,7 +221,10 @@
     <div id="app-view" class="app-container hidden">
         
         <div class="desktop-nav">
-            <h2 style="color: var(--primary-blue);">RentCar</h2>
+            <div style="display: flex; align-items: center;">
+                <img src="logo.png" class="logo-img" alt="Logo">
+                <h2 style="color: var(--primary-blue);">RentCar</h2>
+            </div>
             <div style="display: flex; gap: 20px; cursor: pointer;">
                 <span onclick="navTo('home')">Home</span>
                 <span onclick="navTo('history')">History</span>
@@ -294,7 +318,7 @@
             </div>
 
             <div id="section-history" class="hidden">
-                <div class="section-title">Riwayat Pesanan</div>
+                <div class="section-title">Riwayat Pesanan (Klik untuk detail)</div>
                 <div id="history-list" style="padding: 0 20px 80px;">
                     </div>
             </div>
@@ -302,16 +326,15 @@
             <div id="section-profile" class="hidden">
                 <div class="header"><h3>Profile</h3></div>
                 <div style="padding: 20px; text-align: center;">
-                    <img src="https://via.placeholder.com/100" style="border-radius: 50%; margin-bottom: 20px;">
+                    <img id="profile-pic-display" src="https://via.placeholder.com/100" 
+                         style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; margin-bottom: 20px; border: 3px solid #eee;">
+                    
                     <h3 id="profile-name">Nama User</h3>
                     <p id="profile-address" style="color: #666; margin-bottom: 20px;">Alamat</p>
                     
                     <div style="text-align: left; background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <p><strong>Username:</strong> <span id="profile-username"></span></p>
                         <p><strong>Gender:</strong> <span id="profile-gender"></span></p>
-                        <p><strong>KTP:</strong> <br>
-                            <img id="profile-ktp-img" src="" style="max-width: 200px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd;">
-                        </p>
                     </div>
 
                     <button class="btn-block" style="background: var(--danger);" onclick="logout()">Logout</button>
@@ -333,23 +356,40 @@
 
             <div class="admin-dashboard">
                 <div class="admin-card">
-                    <h3>Tambah Mobil Baru</h3>
-                    <div class="input-group" style="margin-top: 10px;">
+                    <h3 id="form-title">Tambah Mobil Baru</h3>
+                    <input type="hidden" id="edit-car-id"> <div class="input-group" style="margin-top: 10px;">
                         <input type="text" id="add-car-name" placeholder="Nama Mobil (ex: Pajero)">
                     </div>
                     <div class="input-group">
                         <input type="number" id="add-car-price" placeholder="Harga Sewa (ex: 600000)">
                     </div>
                     <div class="input-group">
+                        <input type="text" id="add-car-specs" placeholder="Specs (Pisahkan koma: Auto, Diesel)">
+                    </div>
+                    <div class="input-group">
                         <label>Upload Gambar Mobil</label>
                         <input type="file" id="add-car-img" accept="image/*">
                     </div>
-                    <button class="btn-block" onclick="adminAddCar()">+ Tambah Mobil</button>
+                    
+                    <button class="btn-block" id="btn-save-car" onclick="adminSaveCar()">+ Simpan Mobil</button>
+                    <button class="btn-block hidden" id="btn-cancel-edit" onclick="cancelEdit()" style="background: #999; margin-top: 5px;">Batal Edit</button>
                 </div>
 
-                <h3>Persetujuan Pesanan</h3>
+                <h3>Daftar Mobil (Edit/Hapus)</h3>
+                <div id="admin-car-list" class="car-list-container">
+                    </div>
+
+                <h3 style="margin-top: 20px;">Persetujuan Pesanan</h3>
                 <div id="admin-order-list">
                     </div>
+            </div>
+        </div>
+
+        <div id="order-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeModal('order-modal')">&times;</span>
+                <h3 style="margin-bottom: 15px;">Detail Pesanan</h3>
+                <div id="modal-order-content"></div>
             </div>
         </div>
 
@@ -358,17 +398,17 @@
     <script>
         // === 1. DATA & STATE MANAGEMENT ===
         
-        // Data Mobil Awal
+        // Data Mobil Awal (GAMBAR LOKAL SESUAI PERMINTAAN)
         const initialCars = [
-            { id: 1, name: "Pajero Sport", price: 600000, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/2019_Mitsubishi_Pajero_Sport_2.4_Dakar_Ultimate_4x2_KR1W_%2820200215%29.jpg/640px-2019_Mitsubishi_Pajero_Sport_2.4_Dakar_Ultimate_4x2_KR1W_%2820200215%29.jpg", specs: ["Automatic", "Diesel", "7 Seats"] },
-            { id: 2, name: "Toyota Agya", price: 270000, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/2023_Toyota_Agya_1.2_GR_Sport_%28Indonesia%29_front_view.jpg/640px-2023_Toyota_Agya_1.2_GR_Sport_%28Indonesia%29_front_view.jpg", specs: ["Automatic", "Gas", "5 Seats"] },
-            { id: 3, name: "Honda Civic", price: 800000, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/2022_Honda_Civic_Sport_Touring_%28USA%29_front_view.jpg/640px-2022_Honda_Civic_Sport_Touring_%28USA%29_front_view.jpg", specs: ["Automatic", "Gas", "5 Seats"] }
+            { id: 1, name: "Pajero Sport", price: 600000, img: "pajero.png", specs: ["Automatic", "Diesel", "7 Seats"] },
+            { id: 2, name: "Toyota Agya", price: 270000, img: "agya.png", specs: ["Automatic", "Gas", "5 Seats"] },
+            { id: 3, name: "Honda Civic", price: 800000, img: "civic.png", specs: ["Automatic", "Gas", "5 Seats"] }
         ];
 
         // User Default
         const defaultUser = {
             username: 'user', password: 'user123', name: 'Septiyana', 
-            address: 'Semarang', gender: 'P', ktpImg: 'https://via.placeholder.com/300x200?text=KTP+User', role: 'customer',
+            address: 'Semarang', gender: 'P', ktpImg: 'https://via.placeholder.com/300x200?text=Profile', role: 'customer',
             paymentMethods: [] 
         };
 
@@ -385,8 +425,9 @@
         let currentUser = null; 
         let selectedCarId = null;
         let selectedPaymentMethod = null;
+        let isEditing = false; // State untuk mode edit admin
 
-        // === 2. AUTHENTICATION LOGIC (REAL LOGIN) ===
+        // === 2. AUTHENTICATION LOGIC ===
         function toggleAuth(type) {
             if(type === 'register') {
                 document.getElementById('login-form').classList.add('hidden');
@@ -401,7 +442,7 @@
             const userIn = document.getElementById('login-username').value;
             const passIn = document.getElementById('login-password').value;
             
-            // 1. Cek Admin
+            // Admin Check
             if (userIn === 'admin' && passIn === 'admin123') {
                 currentUser = { name: 'Administrator', role: 'admin', username: 'admin' };
                 initAdmin();
@@ -410,7 +451,7 @@
                 return;
             } 
             
-            // 2. Cek User
+            // User Check
             const users = JSON.parse(localStorage.getItem('users')) || [];
             const foundUser = users.find(u => u.username === userIn && u.password === passIn);
 
@@ -434,18 +475,16 @@
 
             if(!name || !user || !pass) { alert('Mohon lengkapi data'); return; }
 
-            // Cek Username
             const users = JSON.parse(localStorage.getItem('users')) || [];
             if(users.some(u => u.username === user)) {
                 alert('Username sudah digunakan!');
                 return;
             }
 
-            // Fungsi Simpan Data User
             const saveUser = (ktpBase64) => {
                 const newUser = { 
                     name, address, gender, 
-                    ktpImg: ktpBase64 || "https://via.placeholder.com/300x200?text=No+KTP", 
+                    ktpImg: ktpBase64 || "https://via.placeholder.com/100", 
                     username: user, password: pass, 
                     role: 'customer',
                     paymentMethods: [] 
@@ -453,20 +492,16 @@
                 
                 users.push(newUser);
                 localStorage.setItem('users', JSON.stringify(users));
-
                 alert('Registrasi Berhasil! Silakan Login.');
                 toggleAuth('login');
             };
 
-            // Handle Upload File KTP
             if (ktpInput.files && ktpInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    saveUser(e.target.result); // Simpan setelah convert ke base64
-                };
+                reader.onload = function(e) { saveUser(e.target.result); };
                 reader.readAsDataURL(ktpInput.files[0]);
             } else {
-                saveUser(null); // Simpan tanpa gambar jika user tidak upload
+                saveUser(null);
             }
         }
 
@@ -480,17 +515,18 @@
             document.getElementById('admin-panel').classList.add('hidden');
             document.getElementById('customer-panel').classList.remove('hidden');
             
-            // Set Profile Data
             document.getElementById('display-name').innerText = currentUser.name;
             document.getElementById('profile-name').innerText = currentUser.name;
             document.getElementById('profile-address').innerText = currentUser.address;
             document.getElementById('profile-username').innerText = currentUser.username;
             document.getElementById('profile-gender').innerText = currentUser.gender === 'L' ? 'Laki-laki' : 'Perempuan';
             
-            // Tampilkan Gambar KTP di Profile
-            const ktpImg = document.getElementById('profile-ktp-img');
-            ktpImg.src = currentUser.ktpImg;
-            ktpImg.style.display = 'block';
+            const profilePic = document.getElementById('profile-pic-display');
+            if(currentUser.ktpImg && currentUser.ktpImg.length > 50) {
+                 profilePic.src = currentUser.ktpImg;
+            } else {
+                 profilePic.src = "https://via.placeholder.com/100";
+            }
 
             navTo('home');
         }
@@ -498,11 +534,11 @@
         function initAdmin() {
             document.getElementById('customer-panel').classList.add('hidden');
             document.getElementById('admin-panel').classList.remove('hidden');
+            renderAdminCarList(); // Menampilkan daftar mobil untuk diedit
             renderAdminOrders();
         }
 
         function navTo(page) {
-            // Hide all sections
             document.getElementById('section-home').classList.add('hidden');
             document.getElementById('section-detail').classList.add('hidden');
             document.getElementById('section-history').classList.add('hidden');
@@ -510,7 +546,6 @@
             document.getElementById('section-payment').classList.add('hidden');
             document.getElementById('section-add-payment').classList.add('hidden');
             
-            // Reset Nav Active State
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
             if(page === 'home') {
@@ -534,9 +569,9 @@
             }
         }
 
-        // === 4. FEATURE LOGIC (CUSTOMER) ===
+        // === 4. CUSTOMER FEATURES ===
 
-        // A. Render Mobil
+        // A. Render Cars
         function renderCars(filterText = '') {
             const cars = JSON.parse(localStorage.getItem('cars'));
             const container = document.getElementById('car-list');
@@ -550,7 +585,7 @@
                     <img src="${car.img}" class="car-img-home">
                     <div style="font-weight: 700; font-size: 16px;">${car.name}</div>
                     <div class="car-specs">
-                        ${car.specs.map(s => `<span>${s}</span>`).join(' | ')}
+                        ${car.specs.map(s => `<span class="spec-tag">${s}</span>`).join('')}
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
                         <div style="color: var(--primary-blue); font-weight:600;">Rp ${car.price.toLocaleString()}/hari</div>
@@ -566,13 +601,13 @@
             renderCars(txt);
         }
 
-        // B. Detail & Location Logic (With Static Map)
+        // B. Detail & Map
         function openDetail(id) {
             const cars = JSON.parse(localStorage.getItem('cars'));
             const car = cars.find(c => c.id === id);
             selectedCarId = id;
 
-            // UBAH: Menggunakan map.png (Local File)
+            // Menggunakan map.png dari folder lokal
             const mapHtml = `
                 <div id="map-view" class="map-container hidden">
                     <img src="map.png" class="map-static-img" alt="Peta Lokasi">
@@ -583,6 +618,9 @@
             const html = `
                 <img src="${car.img}" style="width:100%; height:200px; object-fit:contain;">
                 <h2 style="margin-top:10px;">${car.name}</h2>
+                <div style="margin: 5px 0;">
+                     ${car.specs.map(s => `<span class="spec-tag">${s}</span>`).join('')}
+                </div>
                 <p style="color:#666;">Rp ${car.price.toLocaleString()} / hari</p>
                 
                 <div class="location-check">
@@ -618,7 +656,6 @@
                 btn.style.background = 'var(--primary-blue)';
                 btn.innerText = 'Lanjut Pilih Pembayaran';
                 msg.classList.add('hidden');
-                
                 mapView.classList.remove('hidden');
             } else {
                 btn.disabled = true;
@@ -629,7 +666,7 @@
             }
         }
 
-        // C. Payment Logic
+        // C. Payment
         function renderPaymentMethods() {
             const container = document.getElementById('payment-list');
             const btnPay = document.getElementById('btn-pay-final');
@@ -667,7 +704,6 @@
             const cards = document.querySelectorAll('.payment-card');
             cards.forEach(c => c.classList.remove('selected'));
             cards[index].classList.add('selected');
-            
             selectedPaymentMethod = currentUser.paymentMethods[index];
             const btnPay = document.getElementById('btn-pay-final');
             btnPay.disabled = false;
@@ -682,7 +718,6 @@
             if(!name || !number) { alert('Lengkapi data kartu'); return; }
 
             const newPayment = { name, number, type };
-            
             if(!currentUser.paymentMethods) currentUser.paymentMethods = [];
             currentUser.paymentMethods.push(newPayment);
 
@@ -692,12 +727,10 @@
                 users[userIndex].paymentMethods = currentUser.paymentMethods;
                 localStorage.setItem('users', JSON.stringify(users));
             }
-
             alert('Metode pembayaran berhasil ditambahkan!');
             navTo('payment');
         }
 
-        // D. Final Process Order
         function processOrder() {
             if(!selectedPaymentMethod) { alert('Pilih pembayaran dulu!'); return; }
             
@@ -709,6 +742,7 @@
                 id: Date.now(),
                 user: currentUser.username,
                 carName: car.name,
+                carImg: car.img,
                 price: car.price,
                 location: location,
                 payment: selectedPaymentMethod.type + ' ' + selectedPaymentMethod.number.slice(-4),
@@ -724,7 +758,7 @@
             navTo('history');
         }
 
-        // E. Render History
+        // D. History with Detail Modal
         function renderHistory() {
             const orders = JSON.parse(localStorage.getItem('orders'));
             const myOrders = orders.filter(o => o.user === currentUser.username);
@@ -737,61 +771,189 @@
 
             container.innerHTML = '';
             myOrders.reverse().forEach(o => {
-                let badgeClass = o.status === 'approved' ? 'status-approved' : (o.status === 'rejected' ? 'text-danger' : 'status-pending');
+                let badgeClass = '';
+                let statusText = o.status.toUpperCase();
                 
+                if(o.status === 'approved') badgeClass = 'status-approved';
+                else if(o.status === 'rejected') badgeClass = 'status-rejected';
+                else badgeClass = 'status-pending';
+
                 const item = `
-                <div class="admin-card">
+                <div class="admin-card" onclick="openOrderModal(${o.id})" style="cursor:pointer;">
                     <div style="display:flex; justify-content:space-between;">
                         <span style="font-weight:bold;">${o.carName}</span>
-                        <span class="status-badge ${badgeClass}">${o.status.toUpperCase()}</span>
+                        <span class="status-badge ${badgeClass}">${statusText}</span>
                     </div>
                     <div style="font-size:12px; color:#666; margin-top:5px;">
-                        <i class="fas fa-map-marker-alt"></i> ${o.location}<br>
-                        <i class="far fa-credit-card"></i> ${o.payment || '-'}<br>
-                        <i class="far fa-calendar"></i> ${o.date}
+                        <i class="far fa-calendar"></i> ${o.date} | Rp ${o.price.toLocaleString()}
                     </div>
-                    <div style="margin-top:10px; font-weight:bold; color:var(--primary-blue);">
-                        Rp ${o.price.toLocaleString()}
-                    </div>
+                    <div style="text-align:right; font-size:10px; color:var(--primary-blue); margin-top:5px;">Klik untuk detail</div>
                 </div>`;
                 container.innerHTML += item;
             });
         }
 
-        // === 5. FEATURE LOGIC (ADMIN) ===
-        function adminAddCar() {
+        function openOrderModal(orderId) {
+            const orders = JSON.parse(localStorage.getItem('orders'));
+            const o = orders.find(x => x.id === orderId);
+            
+            let statusMsg = "";
+            let statusColor = "";
+            if(o.status === 'pending') {
+                statusMsg = "Menunggu konfirmasi admin.";
+                statusColor = "orange";
+            } else if(o.status === 'approved') {
+                statusMsg = "Pesanan Berhasil! Silakan ambil mobil di lokasi.";
+                statusColor = "green";
+            } else {
+                statusMsg = "Pesanan Gagal/Ditolak. Silakan hubungi admin.";
+                statusColor = "red";
+            }
+
+            const html = `
+                <div style="text-align:center;">
+                    <img src="${o.carImg}" style="width:100%; height:150px; object-fit:contain;">
+                    <h3>${o.carName}</h3>
+                    <h4 style="color:${statusColor}; margin: 10px 0;">Status: ${o.status.toUpperCase()}</h4>
+                    <p style="font-size:13px;">${statusMsg}</p>
+                </div>
+                <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
+                <div style="font-size:13px;">
+                    <p><strong>Lokasi:</strong> ${o.location}</p>
+                    <p><strong>Pembayaran:</strong> ${o.payment}</p>
+                    <p><strong>Tanggal:</strong> ${o.date}</p>
+                    <p><strong>Total:</strong> Rp ${o.price.toLocaleString()}</p>
+                </div>
+            `;
+            document.getElementById('modal-order-content').innerHTML = html;
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // === 5. ADMIN LOGIC (CRUD & APPROVAL) ===
+
+        // A. Create & Update Logic
+        function adminSaveCar() {
             const name = document.getElementById('add-car-name').value;
             const price = parseInt(document.getElementById('add-car-price').value);
+            const specsStr = document.getElementById('add-car-specs').value;
             const imgInput = document.getElementById('add-car-img');
+            const specsArr = specsStr.split(',').map(s => s.trim()).filter(s => s !== "");
 
-            if(!name || !price) { alert('Data tidak lengkap'); return; }
+            if(!name || !price) { alert('Data nama dan harga wajib diisi'); return; }
 
-            const saveCar = (imgBase64) => {
-                 const cars = JSON.parse(localStorage.getItem('cars'));
-                cars.push({
-                    id: Date.now(),
-                    name, price, 
-                    img: imgBase64 || "https://via.placeholder.com/300",
-                    specs: ["Manual", "Gas"]
-                });
+            const cars = JSON.parse(localStorage.getItem('cars'));
+
+            const processSave = (imgResult) => {
+                if (isEditing) {
+                    // UPDATE EXISTING
+                    const id = parseInt(document.getElementById('edit-car-id').value);
+                    const idx = cars.findIndex(c => c.id === id);
+                    if (idx !== -1) {
+                        cars[idx].name = name;
+                        cars[idx].price = price;
+                        if(specsArr.length > 0) cars[idx].specs = specsArr;
+                        if(imgResult) cars[idx].img = imgResult; // Update gambar hanya jika upload baru
+                    }
+                    alert('Mobil berhasil diupdate!');
+                    cancelEdit(); // Reset form
+                } else {
+                    // CREATE NEW
+                    const newCar = {
+                        id: Date.now(),
+                        name, price, 
+                        specs: specsArr.length > 0 ? specsArr : ["Manual", "Gas"],
+                        img: imgResult || "pajero.png" // Default jika tidak upload
+                    };
+                    cars.push(newCar);
+                    alert('Mobil berhasil ditambahkan!');
+                    resetForm();
+                }
                 localStorage.setItem('cars', JSON.stringify(cars));
-                
-                alert('Mobil berhasil ditambahkan!');
-                document.getElementById('add-car-name').value = '';
-                document.getElementById('add-car-price').value = '';
-                imgInput.value = ''; // Reset input file
+                renderAdminCarList();
             };
 
-            // Handle File Upload Mobil
+            // Handle Image Logic
             if (imgInput.files && imgInput.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    saveCar(e.target.result);
-                };
+                reader.onload = function(e) { processSave(e.target.result); };
                 reader.readAsDataURL(imgInput.files[0]);
             } else {
-                saveCar(null);
+                processSave(null); // No new image
             }
+        }
+
+        function editCar(id) {
+            isEditing = true;
+            const cars = JSON.parse(localStorage.getItem('cars'));
+            const car = cars.find(c => c.id === id);
+
+            // Populate Form
+            document.getElementById('form-title').innerText = "Edit Mobil";
+            document.getElementById('edit-car-id').value = car.id;
+            document.getElementById('add-car-name').value = car.name;
+            document.getElementById('add-car-price').value = car.price;
+            document.getElementById('add-car-specs').value = car.specs.join(', ');
+            
+            // Change Button State
+            document.getElementById('btn-save-car').innerText = "Update Mobil";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            
+            // Scroll to top form
+            document.querySelector('.admin-dashboard').scrollTop = 0;
+        }
+
+        function cancelEdit() {
+            isEditing = false;
+            resetForm();
+            document.getElementById('form-title').innerText = "Tambah Mobil Baru";
+            document.getElementById('btn-save-car').innerText = "+ Simpan Mobil";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('add-car-name').value = '';
+            document.getElementById('add-car-price').value = '';
+            document.getElementById('add-car-specs').value = '';
+            document.getElementById('add-car-img').value = '';
+        }
+
+        // B. Delete Logic
+        function deleteCar(id) {
+            if(confirm('Yakin ingin menghapus mobil ini?')) {
+                let cars = JSON.parse(localStorage.getItem('cars'));
+                cars = cars.filter(c => c.id !== id);
+                localStorage.setItem('cars', JSON.stringify(cars));
+                renderAdminCarList();
+            }
+        }
+
+        // C. Render Admin Lists
+        function renderAdminCarList() {
+            const cars = JSON.parse(localStorage.getItem('cars'));
+            const container = document.getElementById('admin-car-list');
+            container.innerHTML = '';
+            
+            cars.forEach(car => {
+                const item = `
+                <div class="admin-card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center;">
+                        <img src="${car.img}" style="width:50px; height:40px; object-fit:cover; border-radius:5px; margin-right:10px;">
+                        <div>
+                            <div style="font-weight:bold; font-size:14px;">${car.name}</div>
+                            <div style="font-size:11px; color:#666;">Rp ${car.price.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="admin-action-btn" style="background:var(--warning);" onclick="editCar(${car.id})">Edit</button>
+                        <button class="admin-action-btn" style="background:var(--danger);" onclick="deleteCar(${car.id})">Hapus</button>
+                    </div>
+                </div>`;
+                container.innerHTML += item;
+            });
         }
 
         function renderAdminOrders() {
